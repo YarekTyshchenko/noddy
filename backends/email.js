@@ -4,7 +4,7 @@ exports.sendMessage = function(user, from, to, message) {
     sendmail.sendMail({
         from: "Noddy <noddy@digitalwindow.com>",
         to: user.email.email,
-        subject: 'IRC Noddification from: ' + from,
+        subject: 'IRC: ' + from +' in '+to,
         text: message
     });
 }

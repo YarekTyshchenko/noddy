@@ -59,7 +59,7 @@ client.addListener('error', function(message) {
 });
 client.addListener('message', function (from, to, message) {
     handlers.forEach(function(handler, key) {
-        var regex = new RegExp(handler.regex);
+        var regex = new RegExp(handler.regex, 'i');
         if (regex.exec(message)) {
             handler.callback(from, to, message);
         }
@@ -81,7 +81,7 @@ _.forEach(users, function(user) {
     addHandlerForUser(user);
 })
 
-onMessage(/^\!.*/, function(from, to, message) {
+onMessage('^\!.*', function(from, to, message) {
     var commandTokens = message.match(/^\!([a-zA-Z]+)\s*(.*)$/);
     var commandName = commandTokens[1];
     var params = commandTokens[2].split(' ');
