@@ -4,7 +4,9 @@ IRC Noddification Bot
 Config
 ======
 
-Edit the config file @./config/config.json@ and fill in your IRC server details
+Edit the config file `./config/config.json` and fill in your IRC server details
+
+The runtime settings are persisted in `./config/settings.json`
 
 Install required modules via npm
 
