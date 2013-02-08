@@ -2,7 +2,7 @@
     "irc": {
         "server": "irc.affiliatewindow.com",
         "nick": "Noddy",
-        "channels": ["#noddy"]
+        "channels": ["#noddy", "#prime", "#development"]
     },
     "backends": ["nma", "logger", "email"]
 }

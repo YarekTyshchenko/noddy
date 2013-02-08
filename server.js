@@ -51,6 +51,8 @@ var syncUsers = function() {
 
 var client = new irc.Client(config.irc.server, config.irc.nick, {
     channels: config.irc.channels,
+    userName: 'noddy',
+    realName: 'Nod Noddington Rodriguez'
 });
 client.addListener('error', function(message) {
     console.log('error: ', message);
@@ -71,8 +73,7 @@ var onMessage = function(regex, callback) {
 var addHandlerForUser = function(user) {
     onMessage(user.regex, function(from, to, message) {
         availableBackends[user.backend].sendMessage(
-            user,
-            message
+            user, from, to, message
         );
     });
 }

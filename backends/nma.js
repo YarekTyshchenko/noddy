@@ -1,6 +1,6 @@
 var request = require('request');
 
-exports.sendMessage = function(user, message) {
+exports.sendMessage = function(user, from, to, message) {
     request.post(
         'https://www.notifymyandroid.com/publicapi/notify',
         {

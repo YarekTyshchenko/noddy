@@ -1,10 +1,10 @@
 var nodemailer = require("nodemailer");
 var sendmail = nodemailer.createTransport("Sendmail");
-exports.sendMessage = function(user, message) {
+exports.sendMessage = function(user, from, to, message) {
     sendmail.sendMail({
-        from: "noddy@digitalwindow.com",
+        from: "Noddy <noddy@digitalwindow.com>",
         to: user.email.email,
-        subject: 'IRC Noddification',
+        subject: 'IRC Noddification from: ' + from,
         text: message
     });
 }

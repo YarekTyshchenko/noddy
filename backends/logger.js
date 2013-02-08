@@ -1,3 +1,3 @@
-exports.sendMessage = function(user, message) {
+exports.sendMessage = function(user, from, to, message) {
     console.log(message);
 }
