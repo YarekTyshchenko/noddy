@@ -4,5 +4,7 @@
         "nick": "Noddy",
         "channels": ["#noddy", "#prime", "#development"]
     },
-    "backends": ["nma", "logger", "email"]
+    "backends": ["nma", "logger", "email"],
+    "admins": ["wayne", "yarekt"],
+    "adminCommands": ["say", "part"]
 }

@@ -9,6 +9,14 @@ _.forEach(config.backends, function(backend) {
     availableBackends[backend] = require('./backends/'+backend);
 })
 
+var isAdmin = function(user) {
+    return (_.indexOf(config.admins, user) > -1);
+}
+
+var isAdminCommand = function(command) {
+    return (_.indexOf(config.adminCommands, command) > -1);
+}
+
 var commands = {
     tea: function(from, to) {
         client.say(to, "Its is.... Bens turn to make tea!");
@@ -67,6 +75,13 @@ var commands = {
     say: function(from, to, dest) {
         var text = Array.prototype.slice.call(arguments, 3);
         this.say(dest, text.join(' '));
+    },
+    join: function(from, to, channel) {
+        this.join(channel);
+    },
+    part: function(from, to, channel) {
+        var channel = channel || to;
+        this.part(channel);
     }
 }
 
@@ -126,6 +141,9 @@ onMessage('^\!.*', function(from, to, message) {
     params.unshift(from, to);
     if (! commands[commandName]) {
         client.say('Unknown command: '+commandName);
+        return;
+    }
+    if (isAdminCommand(commandName) && !isAdmin(from)) {
         return;
     }
     commands[commandName].apply(client, params);
