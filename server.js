@@ -34,6 +34,38 @@ var commands = {
         addHandlerForUser(user);
         syncUsers();
         this.say(to, "User added");
+    },
+    list: function(from, to) {
+        this.say(to, 'Currently configured notifications');
+        _.forEach(users, function(user, key) {
+            this.say(to, key + ' : ' + JSON.stringify(user, null, 4));
+        }, this);
+    },
+    toggle: function(from, to, name) {
+        if (! users[name]) {
+            this.say(to, "No notification found for " + name);
+            return;
+        }
+        if (users[name].disabled) {
+            users[name].disabled = false;            
+            this.say(to, 'Notification ' + name + ' has been enabled');
+        } else {
+            users[name].disabled = true;
+            this.say(to, 'Notification ' + name + ' has been disabled');
+        }
+        syncUsers();
+    },
+    delete: function(from, to, name) {
+        if (! users[name]) {
+            this.say(to, "No notification found for " + name);
+            return;
+        }
+        delete users[name];
+        syncUsers();
+        this.say(to, 'Notification ' + name + ' has been deleted');
+    },
+    say: function(from, to, dest, text) {
+        this.say(dest, text);
     }
 }
 
@@ -72,9 +104,11 @@ var onMessage = function(regex, callback) {
 
 var addHandlerForUser = function(user) {
     onMessage(user.regex, function(from, to, message) {
-        availableBackends[user.backend].sendMessage(
-            user, from, to, message
-        );
+        if (!user.disabled) {            
+            availableBackends[user.backend].sendMessage(
+                user, from, to, message
+            );
+        }
     });
 }
 _.forEach(users, function(user) {
@@ -82,6 +116,9 @@ _.forEach(users, function(user) {
 })
 
 onMessage('^\!.*', function(from, to, message) {
+    if (from == config.irc.nick) {
+        return;
+    }
     var commandTokens = message.match(/^\!([a-zA-Z]+)\s*(.*)$/);
     var commandName = commandTokens[1];
     var params = commandTokens[2].split(' ');
