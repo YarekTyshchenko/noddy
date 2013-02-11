@@ -64,8 +64,9 @@ var commands = {
         syncUsers();
         this.say(to, 'Notification ' + name + ' has been deleted');
     },
-    say: function(from, to, dest, text) {
-        this.say(dest, text);
+    say: function(from, to, dest) {
+        var text = Array.prototype.slice.call(arguments, 3);
+        this.say(dest, text.join(' '));
     }
 }
 
