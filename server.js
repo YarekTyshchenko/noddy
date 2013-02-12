@@ -9,17 +9,9 @@ _.forEach(config.backends, function(backend) {
     availableBackends[backend] = require('./backends/'+backend);
 })
 
-var isAdmin = function(user) {
-    return (_.indexOf(config.admins, user) > -1);
-}
-
-var isAdminCommand = function(command) {
-    return (_.indexOf(config.adminCommands, command) > -1);
-}
-
 var commands = {
     tea: function(from, to) {
-        client.say(to, "Its is.... Bens turn to make tea!");
+        this.say(to, "It's ... Ben's turn to make tea!");
     },
     add: function(from, to, name, regex, backend, json) {
         try {
@@ -82,6 +74,20 @@ var commands = {
     part: function(from, to, channel) {
         var channel = channel || to;
         this.part(channel);
+    },
+    help: function(from, to) {
+        // Lists all commands
+        _.forEach(commands, function(fn, key) {
+            var fun = fn.toString().split('\n')[1];
+            if (! /\s+\/\//.exec(fun)) {
+                this.say(to, key + " - No Help available");
+            } else {
+                var matches = fun.match(/\s+\/\/\s+(.*)/);
+                if (matches) {
+                    this.say(to, key + " - " + matches[1]);
+                }
+            }
+        }, this);
     }
 }
 
@@ -130,6 +136,14 @@ var addHandlerForUser = function(user) {
 _.forEach(users, function(user) {
     addHandlerForUser(user);
 })
+
+var isAdmin = function(user) {
+    return (_.indexOf(config.admins, user) > -1);
+}
+
+var isAdminCommand = function(command) {
+    return (_.indexOf(config.adminCommands, command) > -1);
+}
 
 onMessage('^\!.*', function(from, to, message) {
     if (from == config.irc.nick) {
