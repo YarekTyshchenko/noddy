@@ -1,5 +1,6 @@
-var _ = require('underscore');
+var noddy = require('./noddy.js')();
 
+var _ = require('underscore');
 var commands = {
     tea: function(from, to) {
         this.say(to, "It's ... Ben's turn to make tea!");
@@ -61,7 +62,7 @@ var commands = {
     },
     help: function(from, to) {
         // Lists all commands
-        _.forEach(commands, function(fn, key) {
+        _.forEach(this.getCommands(), function(fn, key) {
             var fun = fn.toString().split('\n')[1];
             if (! /\s+\/\//.exec(fun)) {
                 this.say(to, key + " - No Help available");
@@ -75,6 +76,7 @@ var commands = {
     }
 }
 
-var noddy = require('./noddy.js')(commands);
-
+_.forEach(commands, function(command, name) {
+    noddy.addCommand(name, command);
+});
 

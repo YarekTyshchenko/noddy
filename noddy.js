@@ -2,8 +2,9 @@ var irc = require('irc');
 var fs = require('fs');
 var _ = require('underscore');
 
-var Noddy = function(commands) {
+var Noddy = function() {
     var config = require('./config/config.json');
+    var commands = {};
     var settingsFilename = './settings.json';
     var users = {};
     if (fs.existsSync(settingsFilename)) {
@@ -74,6 +75,12 @@ var Noddy = function(commands) {
         },
         getUsers: function() {
             return users;
+        },
+        getCommands: function() {
+            return commands;
+        },
+        addCommand: function(name, command) {
+            commands[name] = command;
         }
     };
 
