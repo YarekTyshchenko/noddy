@@ -8,3 +8,10 @@ exports.sendMessage = function(user, from, to, message) {
         text: message
     });
 }
+exports.verifyConfig = function(config, errorCallback) {
+    if (! config.email.email) {
+        errorCallback('No email provided');
+        return false;
+    }
+    return true;
+}

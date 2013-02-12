@@ -13,3 +13,10 @@ exports.sendMessage = function(user, from, to, message) {
         }
     );
 }
+exports.verifyConfig = function(config, errorCallback) {
+    if (! config.nma.apikey) {
+        errorCallback('No API Key provided');
+        return false;
+    }
+    return true;
+}

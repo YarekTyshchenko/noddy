@@ -1,6 +1,4 @@
 var _ = require('underscore');
-var fs = require('fs');
-
 
 var commands = {
     tea: function(from, to) {
@@ -8,52 +6,46 @@ var commands = {
     },
     add: function(from, to, name, regex, backend, json) {
         try {
-            var json = JSON.parse(json || '{}');
+            var json = JSON.parse(json);
         } catch(e) {
-            this.say(to, "Invalid JSON");
-            return;
+            this.say(from, "Invalid JSON");
+            return; // Maybe comment this?
         }
-        console.log(json);
-        if (! availableBackends[backend]) {
-            this.say(to, 'Submit a merge request for this backend');
-            return;
-        }
-        var user = {
-            regex: regex,
-            backend: backend,
-        };
-        user[backend] = json;
-        users[name] = user;
-        syncUsers();
-        this.say(to, "User added");
+        if (! this.verifyBackendConfig(backend, json, _.bind(function(error) {
+            this.say(from, error);
+        }, this))) return;
+
+        this.addUser(name, regex, backend, json);
     },
     list: function(from, to) {
-        this.say(to, 'Currently configured notifications');
-        _.forEach(users, function(user, key) {
-            this.say(to, key + ' : ' + JSON.stringify(user, null, 4));
+        this.say(from, 'Currently configured notifications');
+        _.forEach(this.getUsers(), function(user, key) {
+            this.say(from, key + ' : ' + JSON.stringify(user, null, 4));
         }, this);
     },
     toggle: function(from, to, name) {
+        var users = this.getUsers();
         if (! users[name]) {
             this.say(to, "No notification found for " + name);
             return;
         }
         if (users[name].disabled) {
-            users[name].disabled = false;            
+            users[name].disabled = false;
             this.say(to, 'Notification ' + name + ' has been enabled');
         } else {
             users[name].disabled = true;
             this.say(to, 'Notification ' + name + ' has been disabled');
         }
-        syncUsers();
+        this.syncUsers();
     },
     delete: function(from, to, name) {
+        var users = this.getUsers();
         if (! users[name]) {
             this.say(to, "No notification found for " + name);
             return;
         }
         delete users[name];
-        syncUsers();
+        this.syncUsers();
         this.say(to, 'Notification ' + name + ' has been deleted');
     },
     say: function(from, to, dest) {
@@ -83,16 +75,6 @@ var commands = {
     }
 }
 
-var handlers = [];
-var availableBackends = {};
-var users = {};
-var noddy = require('./noddy.js')(handlers, availableBackends, commands, users);
+var noddy = require('./noddy.js')(commands);
 
-var settingsFilename = './settings.json';
-if (fs.existsSync(settingsFilename)) {
-    users = JSON.parse(fs.readFileSync(settingsFilename, 'utf8'));
-}
 
-var syncUsers = function() {
-    fs.writeFileSync(settingsFilename, JSON.stringify(users, null, 4));
-}
