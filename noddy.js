@@ -4,7 +4,15 @@ var _ = require('underscore');
 
 var Noddy = function() {
     var config = require('./config/config.json');
+    // load plugins
     var commands = {};
+    fs.readdirSync("./plugins").forEach(function(file) {
+        var plugin = require("./plugins/" + file);
+        _.forEach(plugin.commands, function(command, name) {
+            commands[name] = command;
+        });
+    });
+
     var settingsFilename = './settings.json';
     var users = {};
     if (fs.existsSync(settingsFilename)) {
@@ -78,9 +86,6 @@ var Noddy = function() {
         },
         getCommands: function() {
             return commands;
-        },
-        addCommand: function(name, command) {
-            commands[name] = command;
         }
     };
 
@@ -120,4 +125,4 @@ var Noddy = function() {
     return noddy;
 }
 
-module.exports = Noddy;
+module.exports = Noddy();
