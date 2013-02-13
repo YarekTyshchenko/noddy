@@ -1,17 +1,41 @@
 var irc = require('irc');
 var fs = require('fs');
 var _ = require('underscore');
+var drex = require('drex');
 
 var Noddy = function() {
     var config = require('./config/config.json');
-    // load plugins
     var commands = {};
-    fs.readdirSync("./plugins").forEach(function(file) {
-        var plugin = require("./plugins/" + file);
-        _.forEach(plugin.commands, function(command, name) {
-            commands[name] = command;
+    var plugins = [];
+    var readPlugins = function() {
+        var newPlugins = [];
+        fs.readdirSync("./plugins").forEach(function(file) {
+            newPlugins.push(file);
         });
+        // Load plugins
+        _.difference(newPlugins, plugins).forEach(function(file){
+            console.log('Loaded plugin: '+file);
+            drex.require("./plugins/" + file, function(plugin) {
+                commands[file] = plugin;
+            });
+
+            plugins.push(file);
+        });
+        // Unload plugins
+        _.difference(plugins, newPlugins).forEach(function(file){
+            console.log('Unloaded plugin: '+file);
+            // Delete the plugin from commands array
+            drex.unwatch('./plugins/' + file);
+            delete commands[file];
+        });
+        plugins = _.intersection(plugins, newPlugins);
+    }
+
+    // Watch folder for changes
+    fs.watch('./plugins', function(event, filename) {
+        readPlugins();
     });
+    readPlugins();
 
     var settingsFilename = './settings.json';
     var users = {};
@@ -48,7 +72,40 @@ var Noddy = function() {
         return (_.indexOf(config.adminCommands, command) > -1);
     }
 
-    var noddy = {
+    // Listen for messages
+    client.addListener('message', function(from, to, message) {
+        // Ignore itself
+        if (from == config.irc.nick) {
+            return;
+        }
+
+        // User notifications
+        _.forEach(users, function(user) {
+            var regex = new RegExp(user.regex, 'i');
+            if (regex.exec(message) && !user.disabled) {
+                availableBackends[user.backend].sendMessage(
+                    user, from, to, message
+                );
+            }
+        });
+
+        // Command functions
+        var commandTokens = message.match(/^\!([a-zA-Z]+)\s*(.*)$/);
+        if (! commandTokens) return;
+        var commandName = commandTokens[1];
+        var params = commandTokens[2].split(' ');
+        params.unshift(from, to);
+        if (! noddy.getCommands()[commandName]) {
+            console.log('Unknown command: ' + commandName);
+            return;
+        }
+        if (isAdminCommand(commandName) && !isAdmin(from)) {
+            return;
+        }
+        noddy.getCommands()[commandName].apply(noddy, params);
+    });
+
+    return noddy = {
         say: function(to, text) {
             client.say(to, text);
         },
@@ -85,44 +142,16 @@ var Noddy = function() {
             return users;
         },
         getCommands: function() {
-            return commands;
+            var list = {}
+            _.forEach(commands, function(plugin) {
+                _.forEach(plugin.commands, function(command, name) {
+                    list[name] = command;
+                });
+            });
+
+            return list;
         }
     };
-
-    // Listen for messages
-    client.addListener('message', function(from, to, message) {
-        // Ignore itself
-        if (from == config.irc.nick) {
-            return;
-        }
-
-        // User notifications
-        _.forEach(users, function(user) {
-            var regex = new RegExp(user.regex, 'i');
-            if (regex.exec(message) && !user.disabled) {
-                availableBackends[user.backend].sendMessage(
-                    user, from, to, message
-                );
-            }
-        });
-
-        // Command functions
-        var commandTokens = message.match(/^\!([a-zA-Z]+)\s*(.*)$/);
-        if (! commandTokens) return;
-        var commandName = commandTokens[1];
-        var params = commandTokens[2].split(' ');
-        params.unshift(from, to);
-        if (! commands[commandName]) {
-            console.log('Unknown command: ' + commandName);
-            return;
-        }
-        if (isAdminCommand(commandName) && !isAdmin(from)) {
-            return;
-        }
-        commands[commandName].apply(noddy, params);
-    });
-
-    return noddy;
 }
 
 module.exports = Noddy();
