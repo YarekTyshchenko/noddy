@@ -1,7 +1,4 @@
 exports.commands = {
-    tea: function(from, to) {
-        this.say(to, "It's ... Ben's turn to make tea!");
-    },
     add: function(from, to, name, regex, backend, json) {
         try {
             var json = JSON.parse(json);

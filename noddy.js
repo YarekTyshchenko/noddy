@@ -13,16 +13,16 @@ var Noddy = function() {
             newPlugins.push(file);
         });
         // Load plugins
-        _.difference(newPlugins, plugins).forEach(function(file){
-            console.log('Loaded plugin: '+file);
+        _.difference(newPlugins, plugins).forEach(function(file) {
             drex.require("./plugins/" + file, function(plugin) {
+                console.log('Loaded plugin: '+file);
                 commands[file] = plugin;
             });
 
             plugins.push(file);
         });
         // Unload plugins
-        _.difference(plugins, newPlugins).forEach(function(file){
+        _.difference(plugins, newPlugins).forEach(function(file) {
             console.log('Unloaded plugin: '+file);
             // Delete the plugin from commands array
             drex.unwatch('./plugins/' + file);
