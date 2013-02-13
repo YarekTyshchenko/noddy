@@ -24,7 +24,6 @@ function Tea() {
         });
         var _list = [];
         _.forEach(_people, function(teas, name) {
-        console.log([teas, _min]);
             if (teas == _min) {
                 _list.push(name);
             }
@@ -42,17 +41,20 @@ function Tea() {
     }
     return {
         tea: function(from, to) {
+            // Pick someone to make tea
             var name = _getRandomName();
-            //console.log(name);
             this.say(to, "It's ... " + name + "'s turn to make tea!");
         },
         goodtea: function() {
+            // That cuppa was gooooooood!
             _updateTeaBase(1);
         },
         badtea: function() {
+            // Ewww, bad tea. bad
             _updateTeaBase(-1);
         },
         teastats: function(from, to) {
+            // Display tea awesomness
             this.say(to, 'Tea statistics');
             this.say(to, '==============');
             _.forEach(_people, function(teas, name) {

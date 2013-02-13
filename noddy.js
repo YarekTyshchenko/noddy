@@ -17,6 +17,9 @@ var Noddy = function() {
             drex.require("./plugins/" + file, function(plugin) {
                 console.log('Loaded plugin: '+file);
                 commands[file] = plugin;
+            }, function(error) {
+                console.log("Error in plugin: "+file);
+                console.log(error);
             });
 
             plugins.push(file);
@@ -102,7 +105,12 @@ var Noddy = function() {
         if (isAdminCommand(commandName) && !isAdmin(from)) {
             return;
         }
-        noddy.getCommands()[commandName].apply(noddy, params);
+        try {
+            noddy.getCommands()[commandName].apply(noddy, params);
+        } catch (e) {
+            console.log("Error in command: '"+commandName+"'");
+            console.log(e);
+        }
     });
 
     return noddy = {
