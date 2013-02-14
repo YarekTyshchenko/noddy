@@ -23,6 +23,13 @@ function Trivia() {
                 text: t['$'].text
             });
         });
+        var choices = [];
+        _.forEach(q.answer, function(a) {
+            choices.push({
+                id: a['$'].id,
+                text: a['$'].text
+            });
+        })
         var question = {
             id: q['$'].id,
             text: q['$'].text,
@@ -30,6 +37,7 @@ function Trivia() {
                 id: q.answer[0]['$'].id,
                 text: q.answer[0]['$'].text
             },
+            choices: choices,
             tag: tags,
             difficulty: {
                 score: q.difficulty[0]['$'].score,
@@ -97,12 +105,12 @@ function Trivia() {
         console.log(_currentQuestion.answer.text);
         clearTimeouts();
         timeouts.push(setTimeout(_.bind(function() {
-            this.noddy.say(channel, '2 seconds left');
-        }, this), 8000));
+            this.noddy.say(channel, '5 seconds left');
+        }, this), 10000));
         timeouts.push(setTimeout(_.bind(function() {
             timeout = true;
             this.noddy.say(channel, 'Time out');
-        }, this), 10000));
+        }, this), 15000));
     }, this);
 
     var clearTimeouts = function() {
@@ -133,6 +141,17 @@ function Trivia() {
                 this.say(to, 'Well done '+from+', '+scores[from].correct+' correct, score: '+scores[from].score);
                 setTimeout(sendQuestion, 1000);
             }
+        },
+        hint: function(from, to) {
+            // Give answer choices
+            if (! scores[from]) return;
+            if (! _currentQuestion) return;
+            scores[from].hints++;
+            var hints = [];
+            _.forEach(_currentQuestion.choices, function(choice) {
+                hints.push(choice.text);
+            });
+            this.say(to, 'Hints are: ['+hints.join('] [')+']');
         },
         scores: function(from, to) {
             // Display all cores
