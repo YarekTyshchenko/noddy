@@ -3,6 +3,10 @@ var fs = require('fs');
 var _ = require('underscore');
 var drex = require('drex');
 
+process.on('uncaughtException', function(err) {
+  console.log(err);
+});
+
 var Noddy = function() {
     var config = require('./config/config.json');
     var commands = {};
