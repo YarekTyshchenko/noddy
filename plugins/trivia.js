@@ -1,7 +1,6 @@
 var parseString = require('xml2js').parseString;
 var request = require('request');
 var _ = require('underscore');
-var fs = require('fs');
 var database = {};
 var scores = {};
 
@@ -57,12 +56,11 @@ module.exports = function() {
 
     var _currentQuestion;
 
-    var addQuestion = function(question) {
+    var addQuestion = _.bind(function(question) {
         database[question.id] = question;
         // sync
         this.syncBase('questions', database);
-
-    };
+    }, this);
 
     var getQuestion = function() {
         var q = database[Object.keys(database)[Math.floor(Math.random()*Object.keys(database).length)]];
