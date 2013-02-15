@@ -5,7 +5,8 @@ var fs = require('fs');
 var database = {};
 var scores = {};
 
-function Trivia() {
+module.exports = function() {
+    this.name = 'Trivia';
     var _settingsFilename = './quizbase.json';
     if (fs.existsSync(_settingsFilename)) {
         database = JSON.parse(fs.readFileSync(_settingsFilename, 'utf8'));
@@ -130,7 +131,7 @@ function Trivia() {
         timeouts = [];
     }
 
-    return {
+    this.commands = {
         quiz: function(from, to) {
             // Start the quiz
             channel = to;
@@ -148,7 +149,7 @@ function Trivia() {
                 clearTimeouts();
                 // Credit the user
                 creditUser(from, _currentQuestion);
-                this.say(to, 'Well done '+from+', '+scores[from].correct+' correct, score: '+scores[from].score);
+                this.noddy.say(to, 'Well done '+from+', '+scores[from].correct+' correct, score: '+scores[from].score);
                 setTimeout(sendQuestion, 1000);
             }
         },
@@ -161,18 +162,18 @@ function Trivia() {
             _.forEach(_currentQuestion.choices, function(choice) {
                 hints.push(choice.text);
             });
-            this.say(to, 'Hints are: ['+hints.join('] [')+']');
+            this.noddy.say(to, 'Hints are: ['+hints.join('] [')+']');
         },
         scores: function(from, to) {
             // Display all cores
             _.forEach(scores, function(score, user) {
-                this.say(to, user+' '+score.score);
+                this.noddy.say(to, user+' '+score.score);
             }, this);
         },
         score: function(from, to) {
             // Display your score
             if (scores[from]) {
-                this.say(to, from+' '+scores[from].score);
+                this.noddy.say(to, from+' '+scores[from].score);
             }
         },
         getquestions: function() {
@@ -181,5 +182,3 @@ function Trivia() {
         }
     }
 }
-
-exports.commands = Trivia();

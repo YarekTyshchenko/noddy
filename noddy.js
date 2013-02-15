@@ -2,43 +2,96 @@ var irc = require('irc');
 var fs = require('fs');
 var _ = require('underscore');
 var drex = require('drex');
+var Plugin = require('./plugin');
 
 process.on('uncaughtException', function(err) {
   console.log(err);
 });
 
-var Noddy = function() {
+function Noddy() {
     var config = require('./config/config.json');
-    var commands = {};
-    var plugins = [];
+    var plugins = {};
+    var pluginFiles = [];
+    var noddy = {
+        say: function(to, text) {
+            client.say(to, text);
+        },
+        join: function(channel) {
+            client.join(channel);
+        },
+        part: function(channel) {
+            client.part(channel);
+        },
+        verifyBackendConfig: function(backendName, json, errorCallback) {
+            // Check if it exitss
+            var backend = availableBackends[backendName];
+            if (! backend) {
+                errorCallback('Submit a merge request for this backend');
+                return false;
+            }
+
+            // Verify config is sane
+            return backend.verifyConfig(json, errorCallback);
+        },
+        addUser: function(name, regex, backend, config) {
+            var user = {
+                regex: regex,
+                backend: backend,
+            };
+            user[backend] = config;
+            users[name] = user;
+            syncUsers();
+        },
+        syncUsers: function() {
+            syncUsers();
+        },
+        getUsers: function() {
+            return users;
+        },
+        getCommands: function() {
+            var list = {}
+            _.forEach(plugins, function(plugin) {
+                _.forEach(plugin.getCommands(), function(command, name) {
+                    list[name] = command;
+                });
+            });
+
+            return list;
+        }
+    };
     var readPlugins = function() {
         var newPlugins = [];
         fs.readdirSync("./plugins").forEach(function(file) {
             newPlugins.push(file);
         });
         // Load plugins
-        _.difference(newPlugins, plugins).forEach(function(file) {
+        _.difference(newPlugins, pluginFiles).forEach(function(file) {
             drex.require("./plugins/" + file, function(plugin) {
-                console.log('Loaded plugin: '+file);
-                commands[file] = plugin;
+
+                // Instantiate the base plugin class
+                var actualPlugin = new Plugin(noddy);
+                // Extend it with custom plugin
+                plugin.call(actualPlugin);
+                console.log('Loaded plugin: '+file+' with name: '+actualPlugin.getName());
+                plugins[file] = actualPlugin;
             }, function(error) {
                 console.log("Error in plugin: "+file);
                 console.log(error);
             });
 
-            plugins.push(file);
+            pluginFiles.push(file);
         });
         // Unload plugins
-        _.difference(plugins, newPlugins).forEach(function(file) {
+        _.difference(pluginFiles, newPlugins).forEach(function(file) {
             console.log('Unloaded plugin: '+file);
-            // Delete the plugin from commands array
+            // Delete the plugin from plugins hash
             drex.unwatch('./plugins/' + file);
-            delete commands[file];
+            delete plugins[file];
         });
-        plugins = _.intersection(plugins, newPlugins);
+        pluginFiles = _.intersection(pluginFiles, newPlugins);
     }
 
-    // Watch folder for changes
+    // Watch folder for plugin additions or deletions
     fs.watch('./plugins', function(event, filename) {
         readPlugins();
     });
@@ -110,60 +163,23 @@ var Noddy = function() {
             return;
         }
         try {
-            noddy.getCommands()[commandName].apply(noddy, params);
+            callCommand(commandName, params);
         } catch (e) {
             console.log("Error in command: '"+commandName+"'");
             console.log(e);
         }
     });
 
-    return noddy = {
-        say: function(to, text) {
-            client.say(to, text);
-        },
-        join: function(channel) {
-            client.join(channel);
-        },
-        part: function(channel) {
-            client.part(channel);
-        },
-        verifyBackendConfig: function(backendName, json, errorCallback) {
-            // Check if it exitss
-            var backend = availableBackends[backendName];
-            if (! backend) {
-                errorCallback('Submit a merge request for this backend');
-                return false;
+    var callCommand = function(commandName, params) {
+        _.forEach(plugins, function(plugin) {
+            var index = Object.keys(plugin.getCommands()).indexOf(commandName);
+            if (index > -1) {
+                return plugin.getCommands()[commandName].apply(plugin, params);
             }
+        });
+    }
 
-            // Verify config is sane
-            return backend.verifyConfig(json, errorCallback);
-        },
-        addUser: function(name, regex, backend, config) {
-            var user = {
-                regex: regex,
-                backend: backend,
-            };
-            user[backend] = config;
-            users[name] = user;
-            syncUsers();
-        },
-        syncUsers: function() {
-            syncUsers();
-        },
-        getUsers: function() {
-            return users;
-        },
-        getCommands: function() {
-            var list = {}
-            _.forEach(commands, function(plugin) {
-                _.forEach(plugin.commands, function(command, name) {
-                    list[name] = command;
-                });
-            });
-
-            return list;
-        }
-    };
+    return noddy;
 }
 
 module.exports = Noddy();

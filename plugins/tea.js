@@ -1,6 +1,7 @@
 var _ = require('underscore');
 var fs = require('fs');
-function Tea() {
+module.exports = function() {
+    this.name = 'Tea';
     var _settingsFilename = './teabase.json';
     var _people = {
         'Ben': 0,
@@ -39,11 +40,11 @@ function Tea() {
             fs.writeFileSync(_settingsFilename, JSON.stringify(_people, null, 4));
         }
     }
-    return {
+    this.commands = {
         tea: function(from, to) {
             // Pick someone to make tea
             var name = _getRandomName();
-            this.say(to, "It's ... " + name + "'s turn to make tea!");
+            this.noddy.say(to, "It's ... " + name + "'s turn to make tea!");
         },
         goodtea: function() {
             // That cuppa was gooooooood!
@@ -55,13 +56,11 @@ function Tea() {
         },
         teastats: function(from, to) {
             // Display tea awesomness
-            this.say(to, 'Tea statistics');
-            this.say(to, '==============');
+            this.noddy.say(to, 'Tea statistics');
+            this.noddy.say(to, '==============');
             _.forEach(_people, function(teas, name) {
-                this.say(to, teas+' '+name);
+                this.noddy.say(to, teas+' '+name);
             }, this);
         }
     }
 }
-
-exports.commands = Tea();
