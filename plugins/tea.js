@@ -2,17 +2,13 @@ var _ = require('underscore');
 var fs = require('fs');
 module.exports = function() {
     this.name = 'Tea';
-    var _settingsFilename = './teabase.json';
-    var _people = {
+    var _people = this.loadBase('people', {
         'Ben': 0,
         'yarekt': 0,
         'wayne': 0,
         'richardj': 0,
         'alexf': 0
-    };
-    if (fs.existsSync(_settingsFilename)) {
-        _people = JSON.parse(fs.readFileSync(_settingsFilename, 'utf8'));
-    };
+    });
 
     var _lastTeaMaker = null;
 
@@ -33,13 +29,13 @@ module.exports = function() {
         return _lastTeaMaker = _list[Math.floor(Math.random()*_list.length)];
     }
 
-    var _updateTeaBase = function(value) {
+    var _updateTeaBase = _.bind(function(value) {
         if (_lastTeaMaker) {
             _people[_lastTeaMaker] += value;
             // Save tea base
-            fs.writeFileSync(_settingsFilename, JSON.stringify(_people, null, 4));
+            this.syncBase('people', _people);
         }
-    }
+    }, this);
     this.commands = {
         tea: function(from, to) {
             // Pick someone to make tea

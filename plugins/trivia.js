@@ -7,14 +7,8 @@ var scores = {};
 
 module.exports = function() {
     this.name = 'Trivia';
-    var _settingsFilename = './quizbase.json';
-    if (fs.existsSync(_settingsFilename)) {
-        database = JSON.parse(fs.readFileSync(_settingsFilename, 'utf8'));
-    };
-    var _scoresFilename = './scores.json';
-    if (fs.existsSync(_scoresFilename)) {
-        scores = JSON.parse(fs.readFileSync(_scoresFilename, 'utf8'));
-    };
+    database = this.loadBase('questions', {});
+    scores = this.loadBase('scores', {});
 
     var parseQuestion = function(q) {
         var tags = [];
@@ -66,7 +60,7 @@ module.exports = function() {
     var addQuestion = function(question) {
         database[question.id] = question;
         // sync
-        fs.writeFileSync(_settingsFilename, JSON.stringify(database, null, 4));
+        this.syncBase('questions', database);
 
     };
 
@@ -88,16 +82,12 @@ module.exports = function() {
         return scores[user];
     }
 
-    var syncUsers = function() {
-        fs.writeFileSync(_scoresFilename, JSON.stringify(scores, null, 4));
-    }
-
     var creditUser = function(user, q) {
         var user = getUser(user);
         user.questions++;
         user.correct++;
         user.score += (q.difficulty.score/100);
-        syncUsers();
+        this.syncBase('scores', scores);
     }
 
     var timeout = false;
@@ -134,6 +124,10 @@ module.exports = function() {
     this.commands = {
         quiz: function(from, to) {
             // Start the quiz
+            if (Object.keys(database).length < 1) {
+                this.noddy.say(to, "No questions found");
+                return;
+            }
             channel = to;
             sendQuestion();
         },
