@@ -47,16 +47,18 @@ function Trivia() {
         return question;
     }
 
-    request('http://www.quizbang.co.uk/cgi-bin/fetch.pl?command=questions&num=10', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            parseString(body, function (err, result) {
-                _.forEach(result.quizbang.questions[0].question, function(q) {
-                    var question = parseQuestion(q);
-                    addQuestion(question);
+    var getNewQuestions = function() {
+        request('http://www.quizbang.co.uk/cgi-bin/fetch.pl?command=questions&num=10', function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                parseString(body, function (err, result) {
+                    _.forEach(result.quizbang.questions[0].question, function(q) {
+                        var question = parseQuestion(q);
+                        addQuestion(question);
+                    });
                 });
-            });
-        }
-    });
+            }
+        });
+    }
 
     var _currentQuestion;
 
@@ -73,19 +75,28 @@ function Trivia() {
         return q.text;
     };
 
-    var creditUser = function(user, q) {
+    var getUser = function(user) {
         if (! scores[user]) {
             scores[user] = {
                 questions: 0,
                 correct: 0,
-                score: 0
+                score: 0,
+                hints: 0
             };
         }
+        return scores[user];
+    }
 
-        scores[user].questions++;
-        scores[user].correct++;
-        scores[user].score += (q.difficulty.score/100);
+    var syncUsers = function() {
         fs.writeFileSync(_scoresFilename, JSON.stringify(scores, null, 4));
+    }
+
+    var creditUser = function(user, q) {
+        var user = getUser(user);
+        user.questions++;
+        user.correct++;
+        user.score += (q.difficulty.score/100);
+        syncUsers();
     }
 
     var timeout = false;
@@ -102,15 +113,14 @@ function Trivia() {
         if (! channel) return;
         timeout = false;
         this.noddy.say(channel, getQuestion());
-        console.log(_currentQuestion.answer.text);
         clearTimeouts();
         timeouts.push(setTimeout(_.bind(function() {
             this.noddy.say(channel, '5 seconds left');
-        }, this), 10000));
+        }, this), 25000));
         timeouts.push(setTimeout(_.bind(function() {
             timeout = true;
             this.noddy.say(channel, 'Time out');
-        }, this), 15000));
+        }, this), 30000));
     }, this);
 
     var clearTimeouts = function() {
@@ -164,6 +174,10 @@ function Trivia() {
             if (scores[from]) {
                 this.say(to, from+' '+scores[from].score);
             }
+        },
+        getquestions: function() {
+            // Get moar questions
+            getNewQuestions();
         }
     }
 }
