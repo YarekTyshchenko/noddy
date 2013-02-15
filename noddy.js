@@ -57,6 +57,9 @@ function Noddy() {
             });
 
             return list;
+        },
+        getConfig: function() {
+            return config;
         }
     };
     var readPlugins = function() {
@@ -132,6 +135,13 @@ function Noddy() {
         return (_.indexOf(config.adminCommands, command) > -1);
     }
 
+    client.addListener('join', function(from, to, user) {
+        _.forEach(plugins, function(plugin) {
+            if (plugin.events['join']) {
+                plugin.events['join'].call(plugin, from, to, user);
+            }
+        });
+    });
     // Listen for messages
     client.addListener('message', function(from, to, message) {
         // Ignore itself

@@ -158,7 +158,7 @@ module.exports = function() {
         q: function(from, to) {
             // [Answer] Attempt to answer the question
             if (! _currentQuestion) return;
-            var text = Array.prototype.slice.call(arguments, 2).join(' ');
+            var text = this.getText(arguments);
             if (timeout) {
                 sendQuestion();
                 return;

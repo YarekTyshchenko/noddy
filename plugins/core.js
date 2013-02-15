@@ -52,8 +52,8 @@ module.exports = function() {
         },
         say: function(from, to, dest) {
             // [to] [message] Send message to person or channel
-            var text = Array.prototype.slice.call(arguments, 3);
-            this.noddy.say(dest, text.join(' '));
+            var text = this.getText(arguments, 3);
+            this.noddy.say(dest, text);
         },
         join: function(from, to, channel) {
             // [channel] Join a channel
