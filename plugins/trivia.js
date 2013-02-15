@@ -9,6 +9,9 @@ module.exports = function() {
     database = this.loadBase('questions', {});
     scores = this.loadBase('scores', {});
 
+    /**
+     * Parse the question as returned by quizbang into a more usable format
+     */ 
     var parseQuestion = function(q) {
         var tags = [];
         _.forEach(q.tag, function(t) {
@@ -41,6 +44,9 @@ module.exports = function() {
         return question;
     }
 
+    /**
+     * Load new questions from the web service and add them to the questions list
+     */
     var getNewQuestions = function() {
         request('http://www.quizbang.co.uk/cgi-bin/fetch.pl?command=questions&num=10', function (error, response, body) {
             if (!error && response.statusCode == 200) {
@@ -56,18 +62,27 @@ module.exports = function() {
 
     var _currentQuestion;
 
+    /**
+     * Add a new question to the db and save it
+     */
     var addQuestion = _.bind(function(question) {
         database[question.id] = question;
         // sync
         this.syncBase('questions', database);
     }, this);
 
+    /**
+     * Get a random question
+     */ 
     var getQuestion = function() {
         var q = database[Object.keys(database)[Math.floor(Math.random()*Object.keys(database).length)]];
         _currentQuestion = q;
-        return q.text;
+        return q;
     };
 
+    /**
+     * Get a user from a username, if it does not exist, return an empty one initialized with zeroed values
+     */
     var getUser = function(user) {
         if (! scores[user]) {
             scores[user] = {
@@ -80,13 +95,13 @@ module.exports = function() {
         return scores[user];
     }
 
-    var creditUser = function(user, q) {
+    var creditUser = _.bind(function(user, q) {
         var user = getUser(user);
         user.questions++;
         user.correct++;
         user.score += (q.difficulty.score/100);
         this.syncBase('scores', scores);
-    }
+    }, this);
 
     var timeout = false;
     var checkAnswer = function(text) {
@@ -98,10 +113,18 @@ module.exports = function() {
 
     var channel;
     var timeouts;
+
+
     var sendQuestion = _.bind(function() {
         if (! channel) return;
         timeout = false;
-        this.noddy.say(channel, getQuestion());
+        var q = getQuestion();        
+        var tags = [];
+        _.forEach(q.tag, function(tag){ tags.push(tag.text)});
+
+        q.mask = q.answer.text.replace(/[A-Za-z0-9]/ig, '-');
+        this.noddy.say(channel, "Question " + q.id + ": " + q.text);
+        this.noddy.say(channel, "[Categories: " + tags.join(', ') + '] Answer: ' + q.mask);
         clearTimeouts();
         timeouts.push(setTimeout(_.bind(function() {
             this.noddy.say(channel, '5 seconds left');
@@ -119,7 +142,10 @@ module.exports = function() {
         timeouts = [];
     }
 
-    this.commands = {
+    /**
+     * The commands that this plugin exposes
+     */
+    this.commands = {        
         quiz: function(from, to) {
             // Start the quiz
             if (Object.keys(database).length < 1) {
@@ -141,7 +167,7 @@ module.exports = function() {
                 clearTimeouts();
                 // Credit the user
                 creditUser(from, _currentQuestion);
-                this.noddy.say(to, 'Well done '+from+', '+scores[from].correct+' correct, score: '+scores[from].score);
+                this.noddy.say(to, 'Well done ' + from + ', ' + scores[from].correct  + ' correct, score: ' + scores[from].score);
                 setTimeout(sendQuestion, 1000);
             }
         },
@@ -149,15 +175,32 @@ module.exports = function() {
             // Give answer choices
             if (! scores[from]) return;
             if (! _currentQuestion) return;
+            var ans = _currentQuestion.answer.text;
+            if (ans.length <= 3) {
+                this.noddy.say(to, 'Can haz hint? No don\'t be stupid');
+                return;
+            }
             scores[from].hints++;
             var hints = [];
-            _.forEach(_currentQuestion.choices, function(choice) {
-                hints.push(choice.text);
-            });
-            this.noddy.say(to, 'Hints are: ['+hints.join('] [')+']');
+
+            var mask = _currentQuestion.mask.split('');
+            var matches = ans.match(/[(A-Za-z0-9)]/g);
+
+            var shuffled = _.shuffle(matches).slice(0, Math.floor(matches.length/10));
+
+            for (var ind in shuffled) {
+                for (var j in ans.split('')) {
+                    if(ans[j] == shuffled[ind]) {
+                        mask[j] = shuffled[ind];
+                    }
+                }                
+            }
+            _currentQuestion.mask = mask.join('');
+            this.noddy.say(to, 'Answer: ' + _currentQuestion.mask);
+
         },
         scores: function(from, to) {
-            // Display all cores
+            // Display all scores
             _.forEach(scores, function(score, user) {
                 this.noddy.say(to, user+' '+score.score);
             }, this);
