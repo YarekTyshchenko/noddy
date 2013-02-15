@@ -4,7 +4,7 @@ module.exports = function() {
     this.events = {
         join: function (from, to, user) {
             if (user.nick !== this.noddy.getConfig().irc.nick && _motd[from]) {
-                this.noddy.say(from, _motd[from]);
+                this.noddy.say(from, 'Hello '+to+', '+_motd[from]);
             }
         }
     }
