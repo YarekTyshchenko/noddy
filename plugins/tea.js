@@ -36,6 +36,7 @@ module.exports = function() {
             this.syncBase('people', _people);
         }
     }, this);
+
     this.commands = {
         tea: function(from, to) {
             // Pick someone to make tea

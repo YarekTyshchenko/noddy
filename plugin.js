@@ -8,8 +8,11 @@ module.exports = function (noddy) {
     this.getName = function() {
         return this.name;
     }
-    this.getCommands = function() {
-        return this.commands;
+    this.getCommand = function(name) {
+        if (this.commands[name]) {
+            return this.commands[name];
+        }
+        return false;
     }
     this.getText = function(args, position) {
         position = position || 2;
@@ -21,6 +24,7 @@ module.exports = function (noddy) {
         return './bases/'+plugin+'Base_'+name+'.json';
     };
     this.loadBase = function(name, hash) {
+        hash = hash || {};
         var filename = getFilename(this.name, name);
         if (fs.existsSync(filename)) {
             return JSON.parse(fs.readFileSync(filename, 'utf8'));
