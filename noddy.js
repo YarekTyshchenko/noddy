@@ -2,13 +2,18 @@ var irc = require('irc');
 var _ = require('underscore');
 var util = require('util');
 var l = require('util').log;
-var ploader = require('./ploader');
+var ploader = require('ploader');
 
 var Plugin = require('./plugin');
 
 process.on('uncaughtException', function(err) {
-  console.log(err);
+    console.log('=== Uncaught Exception Crash ===')
+    console.log(err);
 });
+
+var events = [
+    'join', 'part' // message implied
+];
 
 function Noddy() {
     var config = require('./config/config.json');
@@ -77,11 +82,14 @@ function Noddy() {
         return (_.indexOf(config.adminCommands, command) > -1);
     }
 
-    client.addListener('join', function(from, to, user) {
-        _.forEach(plugins, function(plugin) {
-            if (plugin.events['join']) {
-                plugin.events['join'].call(plugin, from, to, user);
-            }
+    // Attach all events
+    events.forEach(function(event) {
+        client.addListener(event, function() {
+            _.forEach(plugins, function(plugin) {
+                if (plugin.events[event]) {
+                    plugin.events[event].apply(plugin, arguments);
+                }
+            });
         });
     });
 
@@ -92,6 +100,7 @@ function Noddy() {
             return;
         }
 
+        // Attach plugin event
         _.forEach(plugins, function(plugin) {
             if (plugin.events['message']) {
                 plugin.events['message'].call(plugin, from, to, message);

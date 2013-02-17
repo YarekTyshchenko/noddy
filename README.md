@@ -10,7 +10,7 @@ The runtime settings for plugins are persisted in `./bases/*.json`
 
 Install required modules via npm
 
-    underscore request nodemailer irc xml2js
+    underscore request nodemailer irc xml2js ploader
 
 then do:
 
