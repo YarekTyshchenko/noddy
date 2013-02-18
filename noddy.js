@@ -85,9 +85,10 @@ function Noddy() {
     // Attach all events
     events.forEach(function(event) {
         client.addListener(event, function() {
+            var args = arguments;
             _.forEach(plugins, function(plugin) {
                 if (plugin.events[event]) {
-                    plugin.events[event].apply(plugin, arguments);
+                    plugin.events[event].apply(plugin, args);
                 }
             });
         });
