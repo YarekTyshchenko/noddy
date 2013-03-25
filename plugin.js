@@ -39,5 +39,12 @@ module.exports = function (noddy) {
             JSON.stringify(hash, null, 4)
         );
     }
+    this.init = function(payload) {
+
+    }
+
+    this.destroy = function() {
+        return {};
+    }
 }
 

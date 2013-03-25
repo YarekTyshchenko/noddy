@@ -7,11 +7,12 @@ var scores = {};
 module.exports = function() {
     this.name = 'Trivia';
     database = this.loadBase('questions', {});
+    blacklist = this.loadBase('blacklist', []);
     scores = this.loadBase('scores', {});
 
     /**
      * Parse the question as returned by quizbang into a more usable format
-     */ 
+     */
     var parseQuestion = function(q) {
         var tags = [];
         _.forEach(q.tag, function(t) {
@@ -48,14 +49,20 @@ module.exports = function() {
      * Load new questions from the web service and add them to the questions list
      */
     var getNewQuestions = function() {
-        request('http://www.quizbang.co.uk/cgi-bin/fetch.pl?command=questions&num=10', function (error, response, body) {
+        console.log('Requesting');
+        request('http://www.quizbang.co.uk/cgi-bin/fetch.pl?command=questions&num=100', function (error, response, body) {
+            console.log('Got response');
             if (!error && response.statusCode == 200) {
                 parseString(body, function (err, result) {
                     _.forEach(result.quizbang.questions[0].question, function(q) {
                         var question = parseQuestion(q);
+                        console.log(!!database[question.id] +' '+ question.text);
                         addQuestion(question);
                     });
                 });
+            } else {
+                console.log(error);
+                console.log(response);
             }
         });
     }
@@ -73,12 +80,17 @@ module.exports = function() {
 
     /**
      * Get a random question
-     */ 
-    var getQuestion = function() {
-        var q = database[Object.keys(database)[Math.floor(Math.random()*Object.keys(database).length)]];
+     */
+    var getQuestion = _.bind(function() {
+        var q;
+        do {
+            q = database[Object.keys(database)[Math.floor(Math.random()*Object.keys(database).length)]];
+        } while(blacklist.indexOf(q.id) > -1);
+        console.log(blacklist.indexOf(q.id));
+        console.log(q.answer.text);
         _currentQuestion = q;
         return q;
-    };
+    }, this);
 
     /**
      * Get a user from a username, if it does not exist, return an empty one initialized with zeroed values
@@ -118,7 +130,7 @@ module.exports = function() {
     var sendQuestion = _.bind(function() {
         if (! channel) return;
         timeout = false;
-        var q = getQuestion();        
+        var q = getQuestion();
         var tags = [];
         _.forEach(q.tag, function(tag){ tags.push(tag.text)});
 
@@ -142,10 +154,38 @@ module.exports = function() {
         timeouts = [];
     }
 
+    var answerQuestion = _.bind(function(text) {
+        if (checkAnswer(text)) {
+            clearTimeouts();
+            if (blacklist.indexOf(_currentQuestion.id) === -1) {
+                blacklist.push(_currentQuestion.id);
+                this.syncBase('blacklist', blacklist);
+            }
+
+            setTimeout(sendQuestion, 1000);
+            return true;
+        }
+        return false;
+    }, this);
+
+    this.events = {
+        message: function(from, to, message) {
+            if (channel == to && ! timeout && _currentQuestion) {
+                if (answerQuestion(message)) {
+                    creditUser(from, _currentQuestion);
+                    this.noddy.say(
+                        to,
+                        'Well done ' + from + ', ' + scores[from].correct  + ' correct, score: ' + (Math.round(scores[from].score*100)/100)
+                    );
+                }
+            }
+        }
+    }
+
     /**
      * The commands that this plugin exposes
      */
-    this.commands = {        
+    this.commands = {
         quiz: function(from, to) {
             // Start the quiz
             if (Object.keys(database).length < 1) {
@@ -163,12 +203,9 @@ module.exports = function() {
                 sendQuestion();
                 return;
             }
-            if (checkAnswer(text)) {
-                clearTimeouts();
-                // Credit the user
+            if (answerQuestion(text)) {
                 creditUser(from, _currentQuestion);
-                this.noddy.say(to, 'Well done ' + from + ', ' + scores[from].correct  + ' correct, score: ' + scores[from].score);
-                setTimeout(sendQuestion, 1000);
+                this.noddy.say(to, 'Well done ' + from + ', ' + scores[from].correct  + ' correct, score: ' + (Math.round(scores[from].score*100)/100));
             }
         },
         hint: function(from, to) {
@@ -186,14 +223,14 @@ module.exports = function() {
             var mask = _currentQuestion.mask.split('');
             var matches = ans.match(/[(A-Za-z0-9)]/g);
 
-            var shuffled = _.shuffle(matches).slice(0, Math.floor(matches.length/10));
+            var shuffled = _.shuffle(matches).slice(0, Math.ceil(matches.length/10));
 
             for (var ind in shuffled) {
                 for (var j in ans.split('')) {
                     if(ans[j] == shuffled[ind]) {
                         mask[j] = shuffled[ind];
                     }
-                }                
+                }
             }
             _currentQuestion.mask = mask.join('');
             this.noddy.say(to, 'Answer: ' + _currentQuestion.mask);
@@ -202,18 +239,19 @@ module.exports = function() {
         scores: function(from, to) {
             // Display all scores
             _.forEach(scores, function(score, user) {
-                this.noddy.say(to, user+' '+score.score);
+                this.noddy.say(to, user+' '+(Math.round(score.score*100)/100));
             }, this);
         },
         score: function(from, to) {
             // Display your score
             if (scores[from]) {
-                this.noddy.say(to, from+' '+scores[from].score);
+                this.noddy.say(to, from+' '+(Math.round(scores[from].score*100)/100));
             }
         },
-        getquestions: function() {
+        getquestions: function(from, to) {
             // Get moar questions
-            getNewQuestions();
+            this.noddy.say(to, [Object.keys(database).length,'Questions in database'].join(' '));
+            //getNewQuestions();
         }
     }
 }

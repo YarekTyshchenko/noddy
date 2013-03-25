@@ -2,7 +2,8 @@
     "irc": {
         "server": "irc.affiliatewindow.com",
         "nick": "Noddy",
-        "channels": ["#noddy", "#prime", "#development"]
+        "channels": ["#noddy"],
+        "retryCount": 999
     },
     "backends": ["nma", "logger", "email"],
     "admins": ["wayne", "yarekt"],

@@ -12,7 +12,7 @@ process.on('uncaughtException', function(err) {
 });
 
 var events = [
-    'join', 'part' // message implied
+    'join', 'part', 'names', 'topic', 'nick', 'invite', 'whois' // message implied
 ];
 
 function Noddy() {
@@ -43,31 +43,40 @@ function Noddy() {
         }
     };
 
-    ploader.watch('./plugins', function(plugin, file) {
-        // Instantiate the base plugin class
-        var basePlugin = new Plugin(noddy);
-        // Extend it with custom plugin
-        plugin.call(basePlugin);
-        plugins[file] = basePlugin;
-        l(['Loaded plugin:',file,'with name:',basePlugin.getName()].join(' '));
-    }, function(plugin, file) {
-        // Reread callback
-        var basePlugin = new Plugin(noddy);
-        // Extend it with custom plugin
-        plugin.call(basePlugin);
-        plugins[file] = basePlugin;
-        l(['Reread plugin:', file].join(' '));
-    }, function(file) {
-        // Remove plugin on deletion
-        delete plugins[file];
-        l(['Unloaded plugin:',file].join(' '));
+    ploader.watch('./plugins', {
+        add: function(plugin, file) {
+            // Instantiate the base plugin class
+            var basePlugin = new Plugin(noddy);
+            // Extend it with custom plugin
+            plugin.call(basePlugin);
+            basePlugin.init();
+            plugins[file] = basePlugin;
+            l(['Loaded plugin:',file,'with name:',basePlugin.getName()].join(' '));
+        },
+        read: function(plugin, file) {
+            // Reread callback
+            var basePlugin = new Plugin(noddy);
+            // Extend it with custom plugin
+            plugin.call(basePlugin);
+            var payload = plugins[file].destroy();
+            basePlugin.init(payload);
+            plugins[file] = basePlugin;
+            l(['Reread plugin:', file].join(' '));
+        },
+        remove: function(file) {
+            // Remove plugin on deletion
+            plugins[file].destroy();
+            delete plugins[file];
+            l(['Unloaded plugin:',file].join(' '));
+        }
     });
 
     // Set up IRC client
     var client = new irc.Client(config.irc.server, config.irc.nick, {
         channels: config.irc.channels,
         userName: 'noddy',
-        realName: 'Nod Noddington Rodriguez'
+        realName: 'Nod Noddington Rodriguez',
+        retryCount: config.irc.retryCount
     });
 
     client.addListener('error', function(message) {
