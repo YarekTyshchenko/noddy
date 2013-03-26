@@ -50,21 +50,23 @@ module.exports = function() {
      */
     var getNewQuestions = function() {
         console.log('Requesting');
-        request('http://www.quizbang.co.uk/cgi-bin/fetch.pl?command=questions&num=100', function (error, response, body) {
-            console.log('Got response');
-            if (!error && response.statusCode == 200) {
-                parseString(body, function (err, result) {
-                    _.forEach(result.quizbang.questions[0].question, function(q) {
-                        var question = parseQuestion(q);
-                        console.log(!!database[question.id] +' '+ question.text);
-                        addQuestion(question);
+        request('http://www.quizbang.co.uk/cgi-bin/fetch.pl?command=questions&num=100',
+            function (error, response, body) {
+                console.log('Got response');
+                if (!error && response.statusCode == 200) {
+                    parseString(body, function (err, result) {
+                        _.forEach(result.quizbang.questions[0].question, function(q) {
+                            var question = parseQuestion(q);
+                            console.log(!!database[question.id] +' '+ question.text);
+                            addQuestion(question);
+                        });
                     });
-                });
-            } else {
-                console.log(error);
-                console.log(response);
+                } else {
+                    console.log(error);
+                    console.log(response);
+                }
             }
-        });
+        );
     }
 
     var _currentQuestion;
