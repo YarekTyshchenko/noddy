@@ -4,21 +4,27 @@ var emailBackend = require('./notify-backends/email');
 
 module.exports = function() {
     this.name = 'Notify';
-    var buffer = new CBuffer(1000);
+    var buffers = {};
+    var getBuffer = function(channel) {
+        if (! buffers[channel]) {
+            buffers[channel] = new CBuffer(1000);
+        }
+        return buffers[channel];
+    }
 
     this.init = function(payload) {
         if (!payload) return;
-        buffer = payload;
+        buffers = payload;
     }
 
     this.destroy = function() {
-        return buffer;
+        return buffers;
     }
 
     this.events = {
-        message: function(from, to, message) {
+        message: function(from, to, message, eventt) {
             // User notifications
-            buffer.push(message);
+            getBuffer(to).push(message);
         }
     };
     this.commands = {
@@ -28,6 +34,12 @@ module.exports = function() {
                 lines = 100;
             }
             // Get email via ldap plugin
+            emailBackend.sendMessage({
+                email: {
+                    email: this.noddy.ldapLinks[nick].email
+                    // Refactor that awfulness somehow
+                }
+            }, from, to, getBuffer(to).toArray().reverse().slice(0,lines).reverse().join('\n'));
         }
     }
 }

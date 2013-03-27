@@ -3,6 +3,7 @@ var _ = require('underscore');
 module.exports = function() {
     this.name = 'Ldap';
     var links = this.loadBase('links');
+    this.noddy.ldapLinks = links;
     var getDataForHex = function(hex, callback) {
         request.get(
             'http://intranet.yarekt.dev.affiliatewindow.com:82/profile/index/hex/'+hex,
@@ -28,7 +29,7 @@ module.exports = function() {
         },
         ldap: function(from, to, name) {
             // [nick] Display LDAP info on a nick
-            var person = links[from];
+            var person = links[name];
             if (!person) return;
 
             ['name','email','mobile'].forEach(_.bind(function(field) {

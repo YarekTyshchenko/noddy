@@ -104,7 +104,7 @@ function Noddy() {
     });
 
     // Listen for messages
-    client.addListener('message', function(from, to, message) {
+    client.addListener('message', function(from, to, message, event) {
         // Ignore itself
         if (from == config.irc.nick) {
             return;
@@ -113,7 +113,7 @@ function Noddy() {
         // Attach plugin event
         _.forEach(plugins, function(plugin) {
             if (plugin.events['message']) {
-                plugin.events['message'].call(plugin, from, to, message);
+                plugin.events['message'].call(plugin, from, to, message, event);
             }
         });
 
