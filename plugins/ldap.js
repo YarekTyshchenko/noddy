@@ -6,7 +6,7 @@ module.exports = function() {
     this.noddy.ldapLinks = links;
     var getDataForHex = function(hex, callback) {
         request.get(
-            'http://intranet.yarekt.dev.affiliatewindow.com:82/profile/index/hex/'+hex,
+            'http://intranet.totalent/profile/index/hex/'+hex,
             {
                 headers: {
                     'X-Requested-with': 'XMLHttpRequest'
