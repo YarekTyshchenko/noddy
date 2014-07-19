@@ -41,7 +41,7 @@ module.exports = function() {
                 this.noddy.say(to, argHelp);
                 return;
             }
-            this.noddy.say(to, 'Available commands: ' + Object.keys(this.noddy.getCommands()).join(','));
+            this.noddy.say(to, 'Available commands: ' + Object.keys(this.noddy.getCommands()).join(', '));
         },
         reload: function() {
             // Reload all plugins

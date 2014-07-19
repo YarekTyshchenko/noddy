@@ -13,7 +13,11 @@ module.exports = function() {
             // [motd text] Set or display MOTD banner on channel join
             var text = this.getText(arguments);
             if (text) {
-                _motd[to] = text;
+                if (text == 'clear') {
+                    delete _motd[to];
+                } else {
+                    _motd[to] = text;
+                }
                 this.syncBase('motd', _motd);
             } else {
                 if (_motd[to]) {
