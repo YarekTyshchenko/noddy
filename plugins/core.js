@@ -42,6 +42,10 @@ module.exports = function() {
                 return;
             }
             this.noddy.say(to, 'Available commands: ' + Object.keys(this.noddy.getCommands()).join(','));
+        },
+        reload: function() {
+            // Reload all plugins
+            this.noddy.reload();
         }
     }
 }

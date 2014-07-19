@@ -3,6 +3,7 @@ var _ = require('underscore');
 var util = require('util');
 var l = require('util').log;
 var ploader = require('ploader');
+var fs = require('fs');
 
 var Plugin = require('./plugin');
 
@@ -43,7 +44,7 @@ function Noddy() {
         }
     };
 
-    ploader.watch('./plugins', {
+    var loader = ploader.attach('./plugins', {
         add: function(plugin, file) {
             // Instantiate the base plugin class
             var basePlugin = new Plugin(noddy);
@@ -69,6 +70,14 @@ function Noddy() {
             delete plugins[file];
             l(['Unloaded plugin:',file].join(' '));
         }
+    });
+
+    // Attach reload handlers
+    noddy.reload = function() {
+        loader.reload();
+    };
+    fs.watch('./plugins', function() {
+        loader.reload();
     });
 
     // Set up IRC client

@@ -1,11 +1,10 @@
 {
     "irc": {
-        "server": "irc.affiliatewindow.com",
+        "server": "irc.freenode.com",
         "nick": "Noddy",
         "channels": ["#noddy"],
         "retryCount": 999
     },
-    "backends": ["nma", "logger", "email"],
     "admins": ["wayne", "yarekt"],
     "adminCommands": ["say", "part"]
 }
