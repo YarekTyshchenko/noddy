@@ -10,7 +10,7 @@ The runtime settings for plugins are persisted in `./bases/*.json`
 
 Install required modules via npm
 
-    underscore irc ploader
+    underscore irc ploader dateformat
 
 run node js bot with
 
@@ -19,9 +19,9 @@ run node js bot with
 Plugins
 =======
 
-The bot comes with three plugins, motd and task tracker. Core plugin contains
-logic for using the bot with IRC as well as providing help on other commands.
-!help should explain how to use each command
+The bot comes with three plugins, motd, remind, and task tracker. Core plugin
+contains logic for using the bot with IRC as well as providing help on other
+commands. !help should explain how to use each command
 
 Plugin Loader
 -------------
