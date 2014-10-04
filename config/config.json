@@ -6,5 +6,10 @@
         "retryCount": 999
     },
     "admins": ["wayne", "yarekt"],
-    "adminCommands": ["say", "part"]
+    "adminCommands": ["say", "part"],
+    "plugins": {
+        "pushover": {
+            "token" : null
+        }
+    }
 }

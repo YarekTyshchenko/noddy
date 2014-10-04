@@ -10,7 +10,7 @@ module.exports = function() {
     }
     this.commands = {
         motd: function(from, to) {
-            // [motd text] Set or display MOTD banner on channel join
+            // [text|clear] Set, display, or clear MOTD banner on channel join
             var text = this.getText(arguments);
             if (text) {
                 if (text == 'clear') {

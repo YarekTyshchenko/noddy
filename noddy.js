@@ -8,8 +8,8 @@ var fs = require('fs');
 var Plugin = require('./plugin');
 
 process.on('uncaughtException', function(err) {
-    console.log('=== Uncaught Exception Crash ===')
-    console.log(err);
+    l('=== Uncaught Exception Crash ===')
+    l(err);
 });
 
 var events = [
@@ -41,6 +41,9 @@ function Noddy() {
         },
         getConfig: function() {
             return config;
+        },
+        log: function(message) {
+            l(message);
         }
     };
 
@@ -59,16 +62,25 @@ function Noddy() {
             var basePlugin = new Plugin(noddy);
             // Extend it with custom plugin
             plugin.call(basePlugin);
-            var payload = plugins[file].destroy();
+            // Extract payload on destruction, if possible
+            var payload;
+            if (!_.isUndefined(plugins[file])) {
+                payload = plugins[file].destroy();
+            }
             basePlugin.init(payload);
             plugins[file] = basePlugin;
             l(['Reread plugin:', file].join(' '));
         },
         remove: function(file) {
             // Remove plugin on deletion
-            plugins[file].destroy();
-            delete plugins[file];
+            if (!_.isUndefined(plugins[file])) {
+                plugins[file].destroy();
+                delete plugins[file];
+            }
             l(['Unloaded plugin:',file].join(' '));
+        },
+        error: function(file, e) {
+            l(['Problem in plugin', file, ':', e].join(' '));
         }
     });
 
@@ -89,7 +101,7 @@ function Noddy() {
     });
 
     client.addListener('error', function(message) {
-        console.log('error: ', message);
+        l('error: ', message);
     });
 
     var isAdmin = function(user) {
@@ -115,7 +127,7 @@ function Noddy() {
     // Listen for messages
     client.addListener('message', function(from, to, message, event) {
         // Ignore itself
-        if (from == config.irc.nick) {
+        if (from === client.nick) {
             return;
         }
 
@@ -133,7 +145,7 @@ function Noddy() {
         var params = commandTokens[2].split(' ');
         params.unshift(from, to);
         if (! noddy.getCommands()[commandName]) {
-            console.log('Unknown command: ' + commandName);
+            l('Unknown command: ' + commandName);
             return;
         }
         if (isAdminCommand(commandName) && !isAdmin(from)) {
@@ -142,8 +154,8 @@ function Noddy() {
         try {
             callCommand(commandName, params);
         } catch (e) {
-            console.log("Error in command: '"+commandName+"'");
-            console.log(e);
+            l("Error in command: '"+commandName+"'");
+            l(e);
         }
     });
 
