@@ -36,7 +36,7 @@ module.exports = function() {
     }, this);
 
     var _format = function(reminder, from) {
-        return ['[', reminder.time, '] ', from, ' -> ', reminder.from, ': ',reminder.text].join('');
+        return ['[', reminder.time, '] ', from, ' <- ', reminder.from, ': ',reminder.text].join('');
     }
 
     this.events = {
