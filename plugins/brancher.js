@@ -41,7 +41,6 @@ module.exports = function(){
                 list.push(branch.name);
                 repo.branches[branch.name] = {name: branch.name};
             });
-            repo.lastChecked = null; // @TODO: write the time
             sync();
             callback(list);
         });
@@ -120,27 +119,81 @@ module.exports = function(){
             });
         });
     };
-
+    var timeoutRef;
     // Start a timer
-    // If its time to check branches
-    // Check one branch, Pick a random person
-    // Bug them to rebase a branch
+    var timeout = function() {
+        _.each(repoList, function(repo) {
+            var deletion = [];
+            var rebase = [];
+            _.each(repo.branches, function(branch) {
+                if (!branch.stats || branch.name == repo.default_branch) return;
+                if (branch.stats.behind > 1) {
+                    if (branch.stats.ahead > 0) {
+                        rebase.push(branch);
+                    } else {
+                        deletion.push(branch);
+                    }
+                }
+            });
+            _.each(repo.channels, function(channel) {
+                // Pick a random branch to pester people about
+                if (_.random(0,1)) {
+                    var b = _.sample(deletion, 1)[0];
+                    if (!b) return;
+                    say(channel,
+                        [
+                            "Branch", b.name, formatStats(b.stats), "is horribly out of date,", b.stats.behind,
+                            "commits behind master, and 0 commits ahead. Please spare its life and delete it"
+                        ].join(' ')
+                    );
+                } else {
+                    var b = _.sample(rebase, 1)[0];
+                    if (!b) return;
+                    say(channel,
+                        [
+                            "Rebase branch", b.name, "Its behind master", formatStats(b.stats)
+                        ].join(' ')
+                    );
+                }
 
-    this.events = {
-        message: function() {
-            // Measure frequency of chatter
-            // Record into variable
-        }
+                if (rebase.length == 0 && deletion.length == 0) {
+                    if (! _.random(0,100)) {
+                        // 1 in 100
+                        say(channel, ["Team superstars! All your branches on", repo.name, "are up to date, Keep being awesome !"].join(' '));
+                    }
+                }
+            });
+        });
+        clearTimeout(timeoutRef);
+        timeoutRef = setTimeout(timeout, _.random(1,24)*60*60*1000);
+    };
+    this.init = function() {
+        timeoutRef = setTimeout(timeout, _.random(1,24)*60*60*1000);
+    };
+    this.destroy = function() {
+        //timeout = function(){};
+        clearTimeout(timeoutRef);
+        return {};
     }
 
     this.commands = {
         'add-repo': function(from, to, name, user, repo) {
             // [nickname] [user] [repo] Add a repo to watch list
-            repoList[name] = {name: name, user:user, repo:repo};
+            repoList[name] = {name: name, user:user, repo:repo, channels: [to]};
             sync();
-            listBranches(repoList[name], function(branches) {
-                say(to, ["Got", branches.length, "branches"].join(' '));
+            getDefaultBranch(repo, function(default_branch) {
+                listBranches(repoList[name], function(branches) {
+                    say(to, ["Got", branches.length, "branches"].join(' '));
+                });
             });
+        },
+        'pester-repo': function(from, to, name) {
+            if (! repoList[name]) {
+                say(to, "Repo not found, add it with add-repo command");
+                return;
+            }
+            repoList[name].channels.push(to);
+            sync();
         },
         'remove-repo': function(from, to, name) {
             if (! repoList[name]) {
@@ -159,9 +212,8 @@ module.exports = function(){
 
             var repo = repoList[name];
             getBranchStats(repo, function(branch, stats) {
-                //repo.branches[branch] = {name:branch, stats:stats, lastChecked:''};
                 if (stats.behind > 0) {
-                    say(to, [repo.repo, branch, formatStats(stats)].join(' '));
+                    say(to, [branch, formatStats(stats)].join(' '));
                 }
             });
         }
