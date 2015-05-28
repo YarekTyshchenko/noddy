@@ -16,6 +16,13 @@ run node js bot with
 
     node noddy.js
 
+test with mocha
+
+    npm install mocha blanket
+    make test
+    make coverage
+    open coverage.html
+
 Plugins
 =======
 

@@ -1,0 +1,8 @@
+{
+    "config": {
+      "blanket": {
+        "pattern": [""],
+        "data-cover-never": [ "node_modules", "test" ]
+      }
+    }
+}
