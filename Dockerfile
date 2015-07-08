@@ -20,6 +20,7 @@ RUN curl -SLO "http://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x
 WORKDIR /app
 
 RUN npm install underscore irc ploader dateformat github geocoder pushover-notifications
+RUN npm install mocha blanket
 #EXPOSE 12346
 
 ADD . /app
