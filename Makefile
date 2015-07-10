@@ -4,9 +4,9 @@ repo ?= registry.hub.docker.com
 
 all: build test xunit coverage
 
-push:
-	docker tag -f $(name):$(tag) $(repo)/$(name):$(tag)
-	docker push $(repo)/$(name):$(tag)
+#push:
+#	docker tag -f $(name):$(tag) $(repo)/$(name):$(tag)
+#	docker push $(repo)/$(name):$(tag)
 
 build:
 	docker build -t $(name):$(tag) .
