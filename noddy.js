@@ -10,6 +10,7 @@ var Plugin = require('./plugin');
 process.on('uncaughtException', function(err) {
     l('=== Uncaught Exception Crash ===')
     l(err);
+    l(err.stack);
 });
 
 var events = [
@@ -41,6 +42,12 @@ function Noddy() {
         },
         getConfig: function() {
             return config;
+        },
+        getConfigVar: function(plugin, key) {
+            if (_.has(config.plugins, plugin) && _.has(config.plugins[plugin], key)) {
+                return config.plugins[plugin][key];
+            }
+            return null;
         },
         log: function(message) {
             l(message);

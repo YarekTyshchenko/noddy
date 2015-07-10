@@ -2,7 +2,7 @@ var Slack = require('slack-client');
 
 module.exports = function() {
     this.name = 'Slack';
-    var token = this.noddy.getConfig().plugins.slack.token;
+    var token = this.getConfigVar("token");
 
     var slack = new Slack(token, true, true);
     var sendMessage = function(){};
@@ -23,6 +23,11 @@ module.exports = function() {
         else {
             console.log('You are not in any channels.');
         }
+    });
+
+    slack.on('error', function(e) {
+        console.log(e);
+        console.log(e.stack);
     });
 
     var say = this.noddy.say;

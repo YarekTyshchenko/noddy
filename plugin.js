@@ -5,9 +5,15 @@ module.exports = function (noddy) {
     this.commands = {};
     this.events = {};
     this.noddy = noddy;
+
     this.getName = function() {
         return this.name;
     }
+
+    this.getConfigVar = function(key) {
+        return noddy.getConfigVar(this.getName(), key);
+    }
+
     this.getCommand = function(name) {
         if (this.commands[name]) {
             return this.commands[name];
