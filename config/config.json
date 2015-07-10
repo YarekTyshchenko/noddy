@@ -10,6 +10,9 @@
     "plugins": {
         "pushover": {
             "token" : null
+        },
+        "Test": {
+            "token": "token"
         }
     }
 }
