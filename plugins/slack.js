@@ -1,26 +1,27 @@
+var _ = require('underscore');
 var Slack = require('slack-client');
 
 module.exports = function() {
     this.name = 'Slack';
     var token = this.getConfigVar("token");
-    var relayChannel = "test";
+    var relayChannel = this.getConfigVar("relayChannel");
     var say = this.noddy.say;
 
     var slack;
-    var sendMessage = function(from, message) {
-        if (!slack) return;
-        if (!slack.connected) return;
-        var c = slack.getChannelByName(relayChannel);
+    var sendMessage = function(_slack, from, message) {
+        if (!_slack) return;
+        if (!_slack.connected) return;
+        var c = _slack.getChannelByName(relayChannel);
         c.postMessage({text: message, username:from});
     }
 
     var onOpen = function(){
-        console.log('Welcome to Slack. You are ' + slack.self.name + ' of ' + slack.team.name);
+        console.log('Welcome to Slack. You are ' + this.self.name + ' of ' + this.team.name);
     };
 
     var onMessage = function(message) {
-        var channel = slack.getChannelGroupOrDMByID(message.channel);
-        var user = slack.getUserByID(message.user);
+        var channel = this.getChannelGroupOrDMByID(message.channel);
+        var user = this.getUserByID(message.user);
         if (!user) return; // Don't trigger on non-existing users
         if (message.subtype === 'bot_message') return; // Don't trigger on bot messages
 
@@ -35,15 +36,21 @@ module.exports = function() {
         console.log(e.stack);
     }
 
+    var initSlack = function(token) {
+        _slack = new Slack(token, true, true);
+        _slack.on('open', onOpen);
+        _slack.on('error', onError);
+        _slack.on('message', onMessage);
+        _slack.login();
+        return _slack;
+    }
+
     this.init = function(payload) {
         if (payload) {
             slack = payload.slack;
         } else {
-            slack = new Slack(token, true, true);
-            slack.on('open', onOpen);
-            slack.on('error', onError);
-            slack.on('message', onMessage);
-            slack.login();
+            slack = initSlack(token);
+            relays = {};
         }
     }
 
@@ -55,8 +62,9 @@ module.exports = function() {
      
     this.events = {
         message: function(from, channel, message) {
+            if (message.indexOf("!") == 0) return; // Ignore commands
             if (channel.toLowerCase() == "#" + relayChannel) {
-                sendMessage(from, message);
+                sendMessage(slack, from, message);
             }
         }
     }
