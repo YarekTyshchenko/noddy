@@ -11,6 +11,9 @@ push:
 build:
 	docker build -t $(name):$(tag) .
 
+run:
+	docker run --rm -it $(name):$(tag)
+
 test:
 	docker run --rm $(name):$(tag) make internal_test
 
@@ -29,4 +32,4 @@ internal_xunit:
 internal_coverage:
 	@./node_modules/.bin/mocha --require blanket -R html-cov
 
-.PHONY: push build test xunit coverage internal_test internal_xunit internal_coverage
+.PHONY: push build test xunit coverage internal_test internal_xunit internal_coverage run

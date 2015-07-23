@@ -4,6 +4,7 @@ var util = require('util');
 var l = require('util').log;
 var ploader = require('ploader');
 var fs = require('fs');
+var config = require('config');
 
 var Plugin = require('./plugin');
 
@@ -18,8 +19,13 @@ var events = [
 ];
 
 function Noddy() {
-    var config = require('./config/config.json');
+    // Actual plugin hash
     var plugins = {};
+    // Raw Plugins found in plugins dir and read
+    var availablePlugins = {};
+    // Map of bools for plugins initiated and responding to events
+    var enabledPlugins = config.enabledPlugins;
+
     var noddy = {
         say: function(to, text) {
             client.say(to, text);
@@ -51,43 +57,76 @@ function Noddy() {
         },
         log: function(message) {
             l(message);
+        },
+        loadPlugin: function(file, payload) {
+            if (! _.has(availablePlugins, file)) {
+                l(['Plugin with file:', file, 'doesn\'t exist'].join(' '));
+                return;
+            }
+
+            if (_.has(plugins, file)) {
+                l(['Plugin with file:', file, 'is already loaded'].join(' '));
+                return;
+            }
+
+            // Load the plugin
+            plugin = availablePlugins[file];
+            // Instantiate the base plugin class
+            var basePlugin = new Plugin(noddy);
+            // Extend it with custom plugin
+            plugin.call(basePlugin);
+            basePlugin.init(payload);
+            plugins[file] = basePlugin;
+            l(['Loaded plugin:', file,'with name:', basePlugin.getName()].join(' '));
+        },
+        unloadPlugin: function(file) {
+            if (_.isUndefined(plugins[file])) {
+                return {};
+            }
+
+            // Remove plugin on deletion
+            var payload = plugins[file].destroy();
+            delete plugins[file];
+            l(['Unloaded plugin:',file].join(' '));
+            return payload
+        },
+        enablePlugin: function(file) {
+            enabledPlugins[file] = true;
+        },
+        disablePlugin: function(file) {
+            delete enabledPlugins[file];
         }
     };
 
     var loader = ploader.attach('./plugins', {
         add: function(plugin, file) {
-            // Instantiate the base plugin class
-            var basePlugin = new Plugin(noddy);
-            // Extend it with custom plugin
-            plugin.call(basePlugin);
-            basePlugin.init();
-            plugins[file] = basePlugin;
-            l(['Loaded plugin:',file,'with name:',basePlugin.getName()].join(' '));
+            availablePlugins[file] = plugin;
+            l(['Read file:', file].join(' '));
+
+            if (_.has(enabledPlugins, file)) {
+                noddy.loadPlugin(file);
+            }
         },
         read: function(plugin, file) {
-            // Reread callback
-            var basePlugin = new Plugin(noddy);
-            // Extend it with custom plugin
-            plugin.call(basePlugin);
-            // Extract payload on destruction, if possible
-            var payload;
-            if (!_.isUndefined(plugins[file])) {
-                payload = plugins[file].destroy();
+            availablePlugins[file] = plugin;
+            l(['Re-read file:', file].join(' '));
+            console.log(enabledPlugins);
+            if (_.has(enabledPlugins, file)) {
+                var payload = noddy.unloadPlugin(file);
+                noddy.loadPlugin(file, payload);
             }
-            basePlugin.init(payload);
-            plugins[file] = basePlugin;
-            l(['Reread plugin:', file].join(' '));
         },
         remove: function(file) {
-            // Remove plugin on deletion
-            if (!_.isUndefined(plugins[file])) {
-                plugins[file].destroy();
-                delete plugins[file];
+            delete availablePlugins[file];
+            l(['Removed file:', file].join(' '));
+
+            if (_.has(enabledPlugins, file)) {
+                noddy.unloadPlugin(file);
             }
-            l(['Unloaded plugin:',file].join(' '));
         },
         error: function(file, e) {
             l(['Problem in plugin', file, ':', e].join(' '));
+            l(e.stack);
         }
     });
 
@@ -163,6 +202,7 @@ function Noddy() {
         } catch (e) {
             l("Error in command: '"+commandName+"'");
             l(e);
+            l(e.stack);
         }
     });
 

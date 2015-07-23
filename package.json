@@ -4,5 +4,21 @@
         "pattern": [""],
         "data-cover-never": [ "node_modules", "test" ]
       }
+    },
+    "dependencies": {
+        "underscore":"*",
+        "irc":"*",
+        "ploader":"*",
+        "dateformat":"*",
+        "github":"*",
+        "geocoder":"*",
+        "pushover-notifications":"*",
+        "slack-client":"*",
+        "pusher-client":"*",
+        "config":"*"
+    },
+    "devDependencies": {
+        "mocha":"*",
+        "blanket":"*"
     }
 }

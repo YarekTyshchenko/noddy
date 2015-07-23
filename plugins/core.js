@@ -46,6 +46,17 @@ module.exports = function() {
         reload: function() {
             // Reload all plugins
             this.noddy.reload();
+        },
+        load: function(from, to, plugin) {
+            // [plugin] Load and enable a plugin
+            this.noddy.enablePlugin(plugin);
+            this.noddy.loadPlugin(plugin);
+
+        },
+        unload: function(from, to, plugin) {
+            // [plugin] Unload and disable a plugin
+            this.noddy.disablePlugin(plugin);
+            this.noddy.unloadPlugin(plugin);
         }
     }
 }

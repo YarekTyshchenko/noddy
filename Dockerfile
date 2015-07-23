@@ -22,6 +22,7 @@ WORKDIR /app
 RUN npm install underscore irc ploader dateformat github geocoder pushover-notifications
 RUN npm install mocha blanket
 RUN npm install slack-client pusher-client
+RUN npm install config
 
 ADD . /app
 
