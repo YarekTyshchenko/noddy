@@ -26,6 +26,10 @@ function Noddy() {
     // Map of bools for plugins initiated and responding to events
     var enabledPlugins = config.enabledPlugins;
 
+    var saveConfig = function() {
+        fs.writeFileSync('./config/runtime.json', JSON.stringify(config, null, 4));
+    };
+
     var noddy = {
         say: function(to, text) {
             client.say(to, text);
@@ -92,9 +96,11 @@ function Noddy() {
         },
         enablePlugin: function(file) {
             enabledPlugins[file] = true;
+            saveConfig();
         },
         disablePlugin: function(file) {
             delete enabledPlugins[file];
+            saveConfig();
         }
     };
 
@@ -110,7 +116,7 @@ function Noddy() {
         read: function(plugin, file) {
             availablePlugins[file] = plugin;
             l(['Re-read file:', file].join(' '));
-            console.log(enabledPlugins);
+
             if (_.has(enabledPlugins, file)) {
                 var payload = noddy.unloadPlugin(file);
                 noddy.loadPlugin(file, payload);
@@ -207,7 +213,10 @@ function Noddy() {
     });
 
     var callCommand = function(commandName, params) {
-        _.forEach(plugins, function(plugin) {
+        _.forEach(plugins, function(plugin, key) {
+            // Skip this if the plugin was removed by previous iteration
+            if (! _.has(plugins, key)) return;
+
             var command = plugin.getCommand(commandName);
             if (command) {
                 command.apply(plugin, params);

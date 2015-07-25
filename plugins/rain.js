@@ -4,14 +4,11 @@ var geocoder = require('geocoder');
 
 module.exports = function() {
     this.name = 'Rain';
-    var _db = this.loadBase('rain', {});
+    var config = this.loadBase('rain', {});
     var l = this.noddy.log;
 
-    var token = this.noddy.getConfig().plugins.rain.token;
-    var location = this.noddy.getConfig().plugins.rain.location;
-
     var getData = function(loc, callback) {
-        https.get('https://api.forecast.io/forecast/'+token+'/'+loc, function(res) {
+        https.get('https://api.forecast.io/forecast/'+config.token+'/'+loc, function(res) {
             var response = '';
             res.on('data', function(chunk) {
                 response += chunk;
@@ -86,8 +83,18 @@ module.exports = function() {
                     processRainDataForLocation(locationString, to);
                 });
             } else {
-                processRainDataForLocation(location, to);
+                processRainDataForLocation(config.location, to);
             }
+        },
+        "rain-set-token": function(from, to, token) {
+            // [token] Set the forecast.io token
+            config.token = token;
+            this.syncBase('rain', config);
+        },
+        "rain-set-location": function(from, to, location) {
+            // [location] Set the default location
+            config.location = location;
+            this.syncBase('rain', config);
         }
     }
 }
