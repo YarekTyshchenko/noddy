@@ -18,7 +18,7 @@ RUN curl -SLO "http://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x
 	&& npm cache clear
 
 WORKDIR /app
-
+COPY /package.json /app/
 RUN npm install
 
 ADD . /app

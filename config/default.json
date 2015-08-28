@@ -9,5 +9,10 @@
     "adminCommands": ["say"],
     "enabledPlugins": {
     	"core.js": true
+    },
+    "plugins": {
+        "Test": {
+            "token": "token"
+        }
     }
 }

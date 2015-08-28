@@ -1,4 +1,9 @@
 {
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yarekt/noddy"
+    },
+    "license": "MIT",
     "config": {
       "blanket": {
         "pattern": [""],
