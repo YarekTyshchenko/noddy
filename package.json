@@ -1,4 +1,6 @@
 {
+    "name": "Noddy",
+    "description": "Modular IRC Bot written in NodeJS",
     "repository": {
         "type": "git",
         "url": "https://github.com/yarekt/noddy"
