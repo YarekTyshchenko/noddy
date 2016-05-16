@@ -45,3 +45,4 @@ most important events, and commands hash gives you ability to register
 your own !commands. Put the plugin source into plugins directory and it will
 be automatically loaded into the bot at runtime. Just make sure that the plugin
 source doesn't have syntax errors
+
